@@ -6,6 +6,7 @@ import vueJsx from "@vitejs/plugin-vue-jsx";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -20,6 +21,41 @@ export default defineConfig({
     }),
     Components({
       resolvers: [ElementPlusResolver()],
+    }),
+    VitePWA({
+      mode: "development",
+      base: "/",
+      includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
+      manifest: false,
+      registerType: process.env.CLAIMS === "true" ? "autoUpdate" : undefined,
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.origin === "https://b23.xrzapi.eu.org",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "wisbayar-api",
+              cacheableResponse: {
+                statuses: [200],
+              },
+            },
+          },
+          {
+            urlPattern: /(.*?)\.(js|css|ts)/, // js /css /ts静态资源缓存
+            handler: "CacheFirst",
+            options: {
+              cacheName: "js-css-cache",
+            },
+          },
+          {
+            urlPattern: /(.*?)\.(png|jpe?g|svg|gif|bmp|psd|tiff|tga|eps)/, // 图片缓存
+            handler: "CacheFirst",
+            options: {
+              cacheName: "image-cache",
+            },
+          },
+        ],
+      },
     }),
   ],
   resolve: {

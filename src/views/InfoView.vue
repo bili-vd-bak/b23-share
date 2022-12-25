@@ -2,9 +2,12 @@
 import { useQuery } from "@urql/vue";
 import router from "../router";
 import { ref, reactive, computed } from "vue";
+import * as FTC from "../utils/FileTypeCheck";
 import { gapi } from "../main";
 
-const data: { md: number; res: string }[] = reactive([]);
+const $$route = router.currentRoute.value;
+const data: { ffn: string; ep: number; qn: string; fn: string; res: string }[] =
+  reactive([]);
 
 function alertd(mes: string) {
   alert(mes);
@@ -16,9 +19,9 @@ const filterTableData = computed(() =>
     .filter(
       (data) =>
         !search.value ||
-        data.md.toString().toLowerCase().includes(search.value.toLowerCase())
+        data.ffn.toLowerCase().includes(search.value.toLowerCase())
     )
-    .sort((a, b) => a.md - b.md)
+    .sort((a, b) => a.ep - b.ep)
 );
 
 async function getPages(drive: string, nextPageToken: string) {
@@ -45,7 +48,7 @@ async function getPages(drive: string, nextPageToken: string) {
   }
 `,
       variables: {
-        path: "/index/",
+        path: "/index/md/" + $$route.params.mdid + "/",
         drive: drive,
         nextPageToken: nextPageToken,
       },
@@ -57,10 +60,18 @@ async function getPages(drive: string, nextPageToken: string) {
   const sharelink = i.sharelink,
     value = i.folder.value;
   for (const j of value) {
-    data.push({
-      md: Number(j.name), //完整文件名
-      res: sharelink, //此集来源链接
-    });
+    const fn = FTC.FNeEXT(j.name),
+      ext = FTC.EXT(j.name);
+    if (ext === ("mp4" || "mkv" || "m4a")) {
+      const info = fn.split("-----");
+      data.push({
+        ffn: fn, //完整文件名
+        ep: Number(info[0]), //集数
+        qn: info[1], //清晰度
+        fn: info[2], //编码方式
+        res: sharelink, //此集来源链接
+      });
+    }
   }
   if (i.folder.nextPageToken) await getPages(drive, i.folder.nextPageToken);
 }
@@ -68,11 +79,13 @@ async function getPages(drive: string, nextPageToken: string) {
 async function main() {
   const result = await useQuery({
     query: `
-  {
-    od(path: "/index/md/") {
+  query($path: String!) {
+    od(path: $path) {
       folder {
         items {
+          sharelink,
           folder {
+            nextPageToken,
             value {
               name
             }
@@ -82,6 +95,9 @@ async function main() {
     }
   }
 `,
+    variables: {
+      path: "/index/md/" + $$route.params.mdid + "/",
+    },
   });
 
   const items = await result.data.value.od.folder.items;
@@ -89,10 +105,18 @@ async function main() {
     const sharelink = i.sharelink,
       value = i.folder.value;
     for (const j of value) {
-      data.push({
-        md: Number(j.name), //完整文件名
-        res: sharelink, //此集来源链接
-      });
+      const fn = FTC.FNeEXT(j.name),
+        ext = FTC.EXT(j.name);
+      if (ext === ("mp4" || "mkv" || "m4a")) {
+        const info = fn.split("-----");
+        data.push({
+          ffn: fn, //完整文件名
+          ep: Number(info[0]), //集数
+          qn: info[1], //清晰度
+          fn: info[2], //编码方式
+          res: sharelink, //此集来源链接
+        });
+      }
     }
     if (i.folder.nextPageToken)
       await getPages(sharelink, i.folder.nextPageToken);
@@ -103,10 +127,12 @@ main();
 
 <template>
   <main>
-    <h2>首页</h2>
-    <p>搜索: {mdid}</p>
+    <h2>番剧: md{{ $route.params.mdid }}</h2>
+    <p>完整搜索: {集数}-----{清晰度}-----{编码方式}</p>
     <el-table :data="filterTableData" stripe height="500" style="width: 100%">
-      <el-table-column prop="md" label="md" width="300" />
+      <el-table-column prop="ep" label="集数" width="70" />
+      <el-table-column prop="qn" label="清晰度" width="150" />
+      <el-table-column prop="fn" label="编码方式" />
       <el-table-column fixed="right" label="操作" width="150">
         <template #header>
           <el-input v-model="search" size="small" placeholder="搜索" />
@@ -125,7 +151,12 @@ main();
             type="primary"
             size="small"
             @click.prevent="
-              router.push('/md/' + filterTableData[scope.$index].md)
+              router.push(
+                '/md/' +
+                  $route.params.mdid +
+                  '/ep/' +
+                  filterTableData[scope.$index].ffn
+              )
             "
           >
             打开
