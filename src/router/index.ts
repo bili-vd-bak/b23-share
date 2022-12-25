@@ -17,6 +17,30 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import("../views/AboutView.vue"),
     },
+    {
+      path: "/raw/md/:mdid/fn/:fn",
+      name: "raw",
+      component: () => import("../views/DlView.vue"),
+      meta: {
+        isKeepAlive: true,
+      },
+    },
+    {
+      path: "/md/:mdid/ep/:ep",
+      name: "dplayer",
+      component: () => import("../views/DplayerView.vue"),
+      meta: {
+        isKeepAlive: true,
+      },
+    },
+    {
+      path: "/md/:mdid",
+      name: "info",
+      component: () => import("../views/InfoView.vue"),
+      meta: {
+        isKeepAlive: true,
+      },
+    },
   ],
 });
 
