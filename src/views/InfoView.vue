@@ -6,8 +6,14 @@ import * as FTC from "../utils/FileTypeCheck";
 import { gapi } from "../main";
 
 const $$route = router.currentRoute.value;
-const data: { ffn: string; ep: number; qn: string; fn: string; res: string }[] =
-  reactive([]);
+const data: {
+  ffn: string;
+  ep: number;
+  qn: string;
+  fn: string;
+  res: string;
+  sn: string;
+}[] = reactive([]);
 
 function alertd(mes: string) {
   alert(mes);
@@ -23,6 +29,44 @@ const filterTableData = computed(() =>
     )
     .sort((a, b) => a.ep - b.ep)
 );
+
+const title = ref("加载中"),
+  evaluate = ref("加载中");
+let eps: { share_copy: string }[] = reactive([]);
+async function getInfo() {
+  const res_info = (
+    await fetch(gapi, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `query($path: String!) {
+    od(path: $path) {
+      raw {
+        dlinks {
+          dlink
+        }
+      }
+    }
+  }
+`,
+        variables: {
+          path: "/index/md/" + $$route.params.mdid + "/info.json",
+        },
+      }),
+    }).then((res) => res.json())
+  )?.data?.od?.raw?.dlinks[0]?.dlink;
+  const info = await fetch(res_info).then((res) => res.json());
+  if (info.code === 0 && info.result) {
+    title.value = info?.result?.title;
+    evaluate.value = info?.result?.evaluate;
+    eps = info?.result?.episodes;
+    /* for (let i = 0; i < info?.result?.episodes.length; i++) {
+      data[i].sn = info?.result?.episodes[i].share_copy;
+    } */
+  }
+}
 
 async function getPages(drive: string, nextPageToken: string) {
   const result = await fetch(gapi, {
@@ -70,6 +114,7 @@ async function getPages(drive: string, nextPageToken: string) {
         qn: info[1], //清晰度
         fn: info[2], //编码方式
         res: sharelink, //此集来源链接
+        sn: eps[Number(info[0]) - 1].share_copy, //B站上本集标题
       });
     }
   }
@@ -100,6 +145,8 @@ async function main() {
     },
   });
 
+  await getInfo();
+
   const items = await result.data.value.od.folder.items;
   for (const i of items) {
     const sharelink = i.sharelink,
@@ -115,6 +162,7 @@ async function main() {
           qn: info[1], //清晰度
           fn: info[2], //编码方式
           res: sharelink, //此集来源链接
+          sn: eps[Number(info[0]) - 1].share_copy, //B站上本集标题
         });
       }
     }
@@ -127,13 +175,16 @@ main();
 
 <template>
   <main>
+    <h1>{{ title }}</h1>
+    <p>简介：{{ evaluate }}</p>
     <h2>番剧: md{{ $route.params.mdid }}</h2>
     <p>完整搜索: {集数}-----{清晰度}-----{编码方式}</p>
     <el-table :data="filterTableData" stripe height="500" style="width: 100%">
-      <el-table-column prop="ep" label="集数" width="70" />
-      <el-table-column prop="qn" label="清晰度" width="150" />
+      <el-table-column prop="ep" label="集数" width="60" />
+      <el-table-column prop="sn" label="标题" width="300" />
+      <el-table-column prop="qn" label="清晰度" width="130" />
       <el-table-column prop="fn" label="编码方式" />
-      <el-table-column fixed="right" label="操作" width="150">
+      <el-table-column fixed="right" label="操作" width="130">
         <template #header>
           <el-input v-model="search" size="small" placeholder="搜索" />
         </template>
