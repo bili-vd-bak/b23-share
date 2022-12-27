@@ -72,7 +72,9 @@ async function main() {
     od(path: "/index/md/") {
       folder {
         items {
+          sharelink,
           folder {
+            nextPageToken,
             value {
               name
             }
