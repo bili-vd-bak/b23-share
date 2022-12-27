@@ -61,10 +61,12 @@ async function getInfo() {
   if (info.code === 0 && info.result) {
     title.value = info?.result?.title;
     evaluate.value = info?.result?.evaluate;
-    eps = info?.result?.episodes;
-    /* for (let i = 0; i < info?.result?.episodes.length; i++) {
-      data[i].sn = info?.result?.episodes[i].share_copy;
-    } */
+    for (let i = 0; i < info?.result?.episodes.length; i++) {
+      if (info?.result?.episodes[i]?.badge !== "预告") {
+        //符合BBDown下载行为：跳过预告、https://github.com/nilaoda/BBDown/commit/53051c92de2ecaa9ce76fc4687ad60ea8937301c
+        eps.push(info?.result?.episodes[i]);
+      }
+    }
   }
 }
 
