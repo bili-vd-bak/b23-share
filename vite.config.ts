@@ -23,7 +23,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     }),
     VitePWA({
-      mode: "development",
+      mode: "production",
       base: "/",
       includeAssets: ["favicon.svg", "robots.txt", "apple-touch-icon.png"],
       manifest: false,
@@ -31,8 +31,8 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.origin === "https://b23.xrzapi.eu.org",
-            handler: "CacheFirst",
+            urlPattern: /graphql|download.aspx/,
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "wisbayar-api",
               cacheableResponse: {

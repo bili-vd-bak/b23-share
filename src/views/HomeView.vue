@@ -45,7 +45,7 @@ async function getPages(drive: string, nextPageToken: string) {
   }
 `,
       variables: {
-        path: "/index/",
+        path: "/index/md/",
         drive: drive,
         nextPageToken: nextPageToken,
       },
@@ -107,6 +107,7 @@ main();
   <main>
     <h2>首页</h2>
     <p>搜索: {mdid}</p>
+    <p>点进去可以查看详情！</p>
     <el-table :data="filterTableData" stripe height="500" style="width: 100%">
       <el-table-column prop="md" label="md" width="300" />
       <el-table-column fixed="right" label="操作" width="150">
