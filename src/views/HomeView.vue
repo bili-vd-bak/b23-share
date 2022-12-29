@@ -4,7 +4,9 @@ import router from "../router";
 import { ref, reactive, computed } from "vue";
 import { gapi } from "../main";
 
-const data: { md: number; res: string }[] = reactive([]);
+const data: { md: number; name: string; ffn: string; res: string }[] = reactive(
+  []
+);
 
 function alertd(mes: string) {
   alert(mes);
@@ -16,10 +18,39 @@ const filterTableData = computed(() =>
     .filter(
       (data) =>
         !search.value ||
-        data.md.toString().toLowerCase().includes(search.value.toLowerCase())
+        data.ffn.toString().toLowerCase().includes(search.value.toLowerCase())
     )
     .sort((a, b) => a.md - b.md)
 );
+
+let md_name_dic: { [key: string]: string } = reactive({});
+async function getInfo() {
+  const res_info = (
+    await fetch(gapi, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `query($path: String!) {
+    od(path: $path) {
+      raw {
+        dlinks {
+          dlink
+        }
+      }
+    }
+  }
+`,
+        variables: {
+          path: "/index/md_name_dic.json",
+        },
+      }),
+    }).then((res) => res.json())
+  )?.data?.od?.raw?.dlinks[0]?.dlink;
+  const info = await fetch(res_info).then((res) => res.json());
+  md_name_dic = info;
+}
 
 async function getPages(drive: string, nextPageToken: string) {
   const result = await fetch(gapi, {
@@ -59,6 +90,8 @@ async function getPages(drive: string, nextPageToken: string) {
   for (const j of value) {
     data.push({
       md: Number(j.name), //完整文件名
+      name: md_name_dic[j.name] || "",
+      ffn: j.name + (md_name_dic[j.name] || ""),
       res: sharelink, //此集来源链接
     });
   }
@@ -86,6 +119,8 @@ async function main() {
 `,
   });
 
+  await getInfo();
+
   const items = await result.data.value.od.folder.items;
   for (const i of items) {
     const sharelink = i.sharelink,
@@ -93,6 +128,8 @@ async function main() {
     for (const j of value) {
       data.push({
         md: Number(j.name), //完整文件名
+        name: md_name_dic[j.name] || "",
+        ffn: j.name + (md_name_dic[j.name] || ""),
         res: sharelink, //此集来源链接
       });
     }
@@ -106,10 +143,11 @@ main();
 <template>
   <main>
     <h2>首页</h2>
-    <p>搜索: {mdid}</p>
+    <p>搜索: {mdid}-{title}</p>
     <p>点进去可以查看详情！</p>
     <el-table :data="filterTableData" stripe height="500" style="width: 100%">
-      <el-table-column prop="md" label="md" width="300" />
+      <el-table-column prop="md" label="md" width="200" />
+      <el-table-column prop="name" label="标题" width="300" />
       <el-table-column fixed="right" label="操作" width="150">
         <template #header>
           <el-input v-model="search" size="small" placeholder="搜索" />
