@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import router from "../router";
 
-router.push("/raw/md/2270/fn/1-----1080P 高码率-----HEVC.ass")
+router.push("/raw/md/2270/fn/1-----1080P 高码率-----HEVC.ass");
 </script>
 
 <template>
