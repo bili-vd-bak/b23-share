@@ -52,7 +52,7 @@ async function getInfo() {
   }
 `,
         variables: {
-          path: "/index/md/" + $$route.params.mdid + "/info.json",
+          path: "/bangumi-index/md/" + $$route.params.mdid + "/info.json",
         },
       }),
     }).then((res) => res.json())
@@ -94,7 +94,7 @@ async function getPages(drive: string, nextPageToken: string) {
   }
 `,
       variables: {
-        path: "/index/md/" + $$route.params.mdid + "/",
+        path: "/bangumi-index/md/" + $$route.params.mdid + "/",
         drive: drive,
         nextPageToken: nextPageToken,
       },
@@ -143,7 +143,7 @@ async function main() {
   }
 `,
     variables: {
-      path: "/index/md/" + $$route.params.mdid + "/",
+      path: "/bangumi-index/md/" + $$route.params.mdid + "/",
     },
   });
 
