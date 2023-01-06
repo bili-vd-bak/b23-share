@@ -22,7 +22,8 @@ async function main() {
   }
 `,
     variables: {
-      path: "/index/md/" + $$route.params.mdid + "/" + $$route.params.fn,
+      path:
+        "/bangumi-index/md/" + $$route.params.mdid + "/" + $$route.params.fn,
     },
   });
 

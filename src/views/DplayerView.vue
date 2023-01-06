@@ -29,7 +29,11 @@ async function main() {
 `,
     variables: {
       path:
-        "/index/md/" + $$route.params.mdid + "/" + $$route.params.ep + ".mp4",
+        "/bangumi-index/md/" +
+        $$route.params.mdid +
+        "/" +
+        $$route.params.ep +
+        ".mp4",
     },
   });
 
@@ -53,7 +57,11 @@ async function main() {
 `,
       variables: {
         path:
-          "/index/md/" + $$route.params.mdid + "/" + $$route.params.ep + ".xml",
+          "/bangumi-index/md/" +
+          $$route.params.mdid +
+          "/" +
+          $$route.params.ep +
+          ".xml",
       },
     }),
   }).then((res) => res.json());
@@ -80,7 +88,7 @@ async function main() {
 `,
           variables: {
             path:
-              "/index/md/" +
+              "/bangumi-index/md/" +
               $$route.params.mdid +
               "/" +
               ep +
@@ -108,7 +116,7 @@ async function main() {
 `,
           variables: {
             path:
-              "/index/md/" +
+              "/bangumi-index/md/" +
               $$route.params.mdid +
               "/" +
               ep +
