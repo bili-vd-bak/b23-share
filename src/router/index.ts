@@ -34,7 +34,7 @@ const router = createRouter({
       },
     },
     {
-      path: "/md/:mdid",
+      path: "/md/:mdid/:sharelink",
       name: "info",
       component: () => import("../views/InfoView.vue"),
       meta: {
