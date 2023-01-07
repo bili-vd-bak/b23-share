@@ -7,11 +7,13 @@ import artplayerPluginDanmuku from "artplayer-plugin-danmuku";
 import { gapi } from "../main";
 
 const $$route = router.currentRoute.value;
-let result;
+let result,
+  qn: { default?: Boolean; html: string; url: string }[] = [];
 const dl = ref("awesome");
 const dan = ref("awesome");
 const sub = ref("awesome");
-const ep = ($$route.params.ep as string).split("-----")[0];
+const info = ($$route.params.ep as string).split("-----");
+const ep = info[0];
 
 async function main() {
   result = await useQuery({
@@ -38,6 +40,11 @@ async function main() {
   });
 
   dl.value = await result.data.value.od.raw.dlinks[0].dlink;
+  qn = [{ default: true, html: info[1], url: dl.value }];
+  let i1 = 0;
+  for (const r of await result.data.value.od.raw.dlinks) {
+    qn.push({ html: `源${i1}`, url: r.dlink });
+  }
 
   const res_dan = await fetch(gapi, {
     method: "POST",
@@ -141,6 +148,7 @@ async function main() {
     fullscreenWeb?: boolean;
     whitelist?: string[];
     plugins?: any[];
+    quality?: any[];
     subtitle?: object;
     fastForward?: boolean;
   } = {
@@ -162,6 +170,7 @@ async function main() {
         danmuku: dan.value,
       }),
     ],
+    quality: qn,
   };
   if (res_sub)
     artCon.subtitle = {

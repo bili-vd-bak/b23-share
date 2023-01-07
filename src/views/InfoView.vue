@@ -4,6 +4,7 @@ import router from "../router";
 import { ref, reactive, computed } from "vue";
 import * as FTC from "../utils/FileTypeCheck";
 import { gapi } from "../main";
+import { Base64 } from "js-base64";
 
 const $$route = router.currentRoute.value;
 const data: {
@@ -31,7 +32,8 @@ const filterTableData = computed(() =>
 );
 
 const title = ref("加载中"),
-  evaluate = ref("加载中");
+  evaluate = ref("加载中"),
+  sharelink = Base64.decode(`${$$route.params.sharelink}`);
 let eps: { share_copy: string }[] = reactive([]);
 async function getInfo() {
   const res_info = (
@@ -41,9 +43,9 @@ async function getInfo() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: `query($path: String!) {
+        query: `query($path: String!, $drive: String) {
     od(path: $path) {
-      raw {
+      raw(drive: $drive) {
         dlinks {
           dlink
         }
@@ -53,6 +55,7 @@ async function getInfo() {
 `,
         variables: {
           path: "/bangumi-index/md/" + $$route.params.mdid + "/info.json",
+          drive: sharelink,
         },
       }),
     }).then((res) => res.json())
@@ -126,9 +129,9 @@ async function getPages(drive: string, nextPageToken: string) {
 async function main() {
   const result = await useQuery({
     query: `
-  query($path: String!) {
+  query($path: String!, $drive: String) {
     od(path: $path) {
-      folder {
+      folder(drive: $drive) {
         items {
           sharelink,
           folder {
@@ -144,6 +147,7 @@ async function main() {
 `,
     variables: {
       path: "/bangumi-index/md/" + $$route.params.mdid + "/",
+      drive: sharelink,
     },
   });
 
@@ -151,25 +155,27 @@ async function main() {
 
   const items = await result.data.value.od.folder.items;
   for (const i of items) {
-    const sharelink = i.sharelink,
-      value = i.folder.value;
-    for (const j of value) {
-      const fn = FTC.FNeEXT(j.name),
-        ext = FTC.EXT(j.name);
-      if (ext === ("mp4" || "mkv" || "m4a")) {
-        const info = fn.split("-----");
-        data.push({
-          ffn: fn, //完整文件名
-          ep: Number(info[0]), //集数
-          qn: info[1], //清晰度
-          fn: info[2], //编码方式
-          res: sharelink, //此集来源链接
-          sn: eps[Number(info[0]) - 1].share_copy, //B站上本集标题
-        });
+    if (i) {
+      const sharelink = i.sharelink,
+        value = i.folder.value;
+      for (const j of value) {
+        const fn = FTC.FNeEXT(j.name),
+          ext = FTC.EXT(j.name);
+        if (ext === ("mp4" || "mkv" || "m4a")) {
+          const info = fn.split("-----");
+          data.push({
+            ffn: fn, //完整文件名
+            ep: Number(info[0]), //集数
+            qn: info[1], //清晰度
+            fn: info[2], //编码方式
+            res: sharelink, //此集来源链接
+            sn: eps[Number(info[0]) - 1].share_copy, //B站上本集标题
+          });
+        }
       }
+      if (i.folder.nextPageToken)
+        await getPages(sharelink, i.folder.nextPageToken);
     }
-    if (i.folder.nextPageToken)
-      await getPages(sharelink, i.folder.nextPageToken);
   }
 }
 main();
