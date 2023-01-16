@@ -8,7 +8,8 @@ import { gapi } from "../main";
 
 const $$route = router.currentRoute.value;
 let result,
-  qn: { default?: Boolean; html: string; url: string }[] = [];
+  qn: { default?: Boolean; html: string; url: string }[] = [],
+  dm: { html: string; url: string; click: Function }[] = [];
 const dl = ref("awesome");
 const dan = ref("awesome");
 const sub = ref("awesome");
@@ -40,10 +41,10 @@ async function main() {
   });
 
   dl.value = await result.data.value.od.raw.dlinks[0].dlink;
-  qn = [{ default: true, html: info[1], url: dl.value }];
   let i1 = 0;
   for (const r of await result.data.value.od.raw.dlinks) {
     qn.push({ html: `源${i1}`, url: r.dlink });
+    i1++;
   }
 
   const res_dan = await fetch(gapi, {
@@ -74,6 +75,20 @@ async function main() {
   }).then((res) => res.json());
 
   dan.value = await res_dan?.data?.od?.raw?.dlinks[0]?.dlink;
+  let i2 = 0;
+  for (const r of await res_dan.data.od.raw.dlinks) {
+    dm.push({
+      html: `源${i2}`,
+      url: r.dlink,
+      click: function () {
+        art.plugins.artplayerPluginDanmuku.config({
+          danmuku: r.dlink,
+        });
+        art.plugins.artplayerPluginDanmuku.load();
+      },
+    });
+    i2++;
+  }
 
   const res_sub =
     (
@@ -151,6 +166,8 @@ async function main() {
     quality?: any[];
     subtitle?: object;
     fastForward?: boolean;
+    type?: string;
+    controls?: any[];
   } = {
     container: ".artRef", // 容器
     url: dl.value, // 视频链接
@@ -164,14 +181,30 @@ async function main() {
     fullscreenWeb: true,
     fastForward: true,
     whitelist: ["*"],
-    plugins: [
+    plugins: [],
+    quality: qn,
+    controls: [
+      {
+        position: "right",
+        html: "切换弹幕",
+        selector: dm,
+        onSelect: function (item: any) {
+          art.plugins.artplayerPluginDanmuku.config({
+            danmuku: item.url,
+          });
+          art.plugins.artplayerPluginDanmuku.load();
+        },
+      },
+    ],
+  };
+  if (dan.value) {
+    artCon.plugins?.push(
       artplayerPluginDanmuku({
         // 弹幕 XML 文件，和 Bilibili 网站的弹幕格式一致
         danmuku: dan.value,
-      }),
-    ],
-    quality: qn,
-  };
+      })
+    );
+  }
   if (res_sub)
     artCon.subtitle = {
       url: res_sub,
@@ -225,7 +258,8 @@ main();
     </p>
     <h1>视频播放</h1>
     <p>
-      若只有声音，说明你的浏览器不支持H.265播放。在上面用其它的专业播放器播放。
+      若只有声音，说明你的浏览器不支持H.265播放。在上面用其它的专业播放器播放。<br />
+      从清晰度处切换视频后，推荐将弹幕切换至同源。
     </p>
     <br />
     <div class="artRef"></div>
@@ -234,7 +268,7 @@ main();
 
 <style>
 .artRef {
-  width: 400px;
-  height: 300px;
+  width: 100%;
+  height: 500px;
 }
 </style>

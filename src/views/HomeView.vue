@@ -149,7 +149,7 @@ main();
     <h2>首页</h2>
     <p>本页面属于<a href="//tp.xrzyun.top/bili-vd-bak">bili-vd-bak</a></p>
     <p>搜索: {mdid}-{title}</p>
-    <p>点进去可以查看详情！</p>
+    <p>点进去可以查看详情！<br />出现同ID番剧，则为不同源。</p>
     <el-table :data="filterTableData" stripe height="500" style="width: 100%">
       <el-table-column prop="md" label="md" width="200" />
       <el-table-column prop="name" label="标题" width="300" />
